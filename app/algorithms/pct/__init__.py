@@ -23,5 +23,16 @@ Coming next (separate commits):
 - ``pct_agent``  — :class:`PackingAlgorithm` wrapper for inference
 """
 from .pct_model import DRL_GAT, PCTConfig
+from .pct_env import PCTEnv, PCTEnvConfig
+from .pct_agent import PCTPackingAgent
+from .ppo_trainer import PCTPPOTrainer, PPOConfig
 
-__all__ = ["DRL_GAT", "PCTConfig"]
+__all__ = [
+    "DRL_GAT",
+    "PCTConfig",
+    "PCTEnv",
+    "PCTEnvConfig",
+    "PCTPackingAgent",
+    "PCTPPOTrainer",
+    "PPOConfig",
+]

@@ -1,0 +1,9 @@
+# Training-only dependencies. Kaggle/Colab usually have torch preinstalled — we ask
+# pip to leave it alone if it already satisfies torch>=2.4.
+-r requirements.txt
+torch>=2.4
+matplotlib>=3.9
+pyarrow>=17
+pandas>=2.2
+tensorboard>=2.18
+tqdm>=4.66
