@@ -164,6 +164,14 @@ class PCTPPOTrainer:
             _, _, value_last, _ = self._act(np.stack(obs_list))
         buf_values[T] = value_last.detach().cpu().numpy()
 
+        # If no episode finished this rollout, fall back to the *current* utilisation of
+        # each in-flight env. This way the log shows real progress even when voyages are
+        # longer than the rollout window.
+        if not ep_utils:
+            for env in self._envs:
+                _, kpis = env.final_score()
+                ep_utils.append(kpis.utilization)
+
         return (
             {
                 "obs": buf_obs,
