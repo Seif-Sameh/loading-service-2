@@ -12,10 +12,6 @@ venv/
 .ipynb_checkpoints/
 *.swp
 .DS_Store
-models/*.pt
-models/*.pth
-models/*.h5
-models/*.ckpt
 !models/.gitkeep
 runs/
 mlruns/
