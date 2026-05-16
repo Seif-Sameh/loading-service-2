@@ -37,6 +37,20 @@ from app.schemas import CargoItem, Container, Placement
 
 N_OBJECTIVES = 5
 
+# Per-component scaling so each step's reward contribution is roughly the same magnitude.
+# Diagnostic at end of Day 1: util_gain raw is ~0.001-0.01 per step (volume / container volume),
+# while access_eff / stability / lifo are 0/1 per step. Without rescaling, the scalarised
+# reward signal under preference w=(1,0,0,0,0) is 100-400x smaller than under w=(0,0,0,0,1),
+# and the policy collapses to ignoring the preference vector and maximising whichever
+# component is easiest. Multiplying util_gain by ~100 brings it in line.
+DEFAULT_SCALE = (
+    100.0,   # util_gain        (raw ~0.001-0.01 per step  -> ~0.1-1.0 after scale)
+    1.0,     # access_eff_gain  (raw 0 or 1)
+    1.0,     # stability_gain   (raw 0 or 1)
+    1.0,     # cog_balance_gain (raw 0.95-1.0; small drift per step)
+    1.0,     # lifo_gain        (raw 0 or 1)
+)
+
 
 @dataclass(frozen=True)
 class RewardComponents:
@@ -128,6 +142,7 @@ def compute_reward_vector(
     cog_after: CoGTracker,
     door_zone_fraction: float = 0.20,
     stable_threshold: float = 0.70,
+    scale: tuple[float, float, float, float, float] = DEFAULT_SCALE,
 ) -> RewardComponents:
     """Compute one step's 5-dimensional reward vector.
 
@@ -159,11 +174,11 @@ def compute_reward_vector(
     ) else 1.0
 
     return RewardComponents(
-        util_gain=float(util_gain),
-        access_eff_gain=float(access_eff_gain),
-        stability_gain=float(stability_gain),
-        cog_balance_gain=float(cog_balance_gain),
-        lifo_gain=float(lifo_gain),
+        util_gain=float(util_gain * scale[0]),
+        access_eff_gain=float(access_eff_gain * scale[1]),
+        stability_gain=float(stability_gain * scale[2]),
+        cog_balance_gain=float(cog_balance_gain * scale[3]),
+        lifo_gain=float(lifo_gain * scale[4]),
     )
 
 

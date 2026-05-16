@@ -86,6 +86,9 @@ class MORLAttentionModel(AttentionModel):
         )
         self.n_objectives = n_objectives
         self.pref_embed = _PreferenceEmbed(n_objectives, embedding_dim)
+        # Additional gating MLP — produces a per-channel scale in [0, 1] applied to
+        # leaf embeddings (FiLM-style modulation, strengthens conditioning).
+        self.pref_gate = _PreferenceEmbed(n_objectives, embedding_dim)
 
     def forward(
         self,
@@ -129,13 +132,26 @@ class MORLAttentionModel(AttentionModel):
             batch_size, -1, self.embedding_dim
         )
         next_emb = self.init_next_embed(current_inputs).reshape(batch_size, -1, self.embedding_dim)
+
+        # === MORL conditioning ===
+        # CRITICAL: only inject preference into LEAF embeddings, not internal/next.
+        # If preference is added uniformly to all nodes, the pointer attention
+        # (Q · K where Q = mean(emb) + pref and K = emb + pref) sees the +pref
+        # shift on both sides and cancels it out — the leaf rankings remain
+        # preference-independent. Tested empirically: uniform-add gives KL=0
+        # between util-only and lifo-only policies.
+        #
+        # Adding pref ONLY to leaves means K = leaf_emb + pref while Q sees only
+        # a small fraction of the shift through the graph mean. The pointer
+        # logits then become genuinely preference-dependent.
+        #
+        # We also apply FiLM-style multiplicative gating (sigmoid gate per
+        # embedding dim) for stronger conditioning than additive shift alone.
+        pref_features = self.pref_embed(preference)          # (B, embed)
+        leaf_gate = torch.sigmoid(self.pref_gate(preference)) # (B, embed) in [0, 1]
+        leaf_emb = leaf_emb * leaf_gate.unsqueeze(1) + pref_features.unsqueeze(1)
+
         init_emb = torch.cat((internal_emb, leaf_emb, next_emb), dim=1)  # (B, graph_size, embed)
-
-        # === MORL conditioning: add preference embedding to every node ===
-        pref_features = self.pref_embed(preference)         # (B, embed)
-        pref_features = pref_features.unsqueeze(1)          # (B, 1, embed)
-        init_emb = init_emb + pref_features                  # broadcast across graph_size
-
         init_emb = init_emb.view(batch_size * graph_size, self.embedding_dim)
 
         embeddings, _ = self.embedder(init_emb, mask=full_mask_inv, evaluate=evaluate)

@@ -49,17 +49,21 @@ class MORLPPOConfig:
     gae_lambda: float = 0.95
     clip_eps: float = 0.2
     value_clip_eps: float = 0.2
-    entropy_coef: float = 0.01
+    entropy_coef: float = 0.03           # bumped from 0.01 to prevent preference collapse
     value_coef: float = 0.5
     max_grad_norm: float = 0.5
     device: str = "cpu"
     log_every: int = 5
     autosave_every: int = 25
     n_objectives: int = N_OBJECTIVES
-    # Dirichlet concentration α. α=1 ⇒ uniform on the simplex (default and recommended).
-    # Smaller α ⇒ corner-biased sampling (operator usually wants one objective).
-    # Larger α  ⇒ centre-biased sampling (operator usually wants balanced).
-    dirichlet_alpha: float = 1.0
+    # Dirichlet concentration α.
+    #   α = 1.0 ⇒ uniform on the simplex (balanced preferences in expectation)
+    #   α < 1   ⇒ CORNER-BIASED (most samples concentrate one objective). Recommended.
+    #   α > 1   ⇒ centre-biased (most samples are near-balanced; rarely a single-objective extreme)
+    # We default to 0.5 so the trainer sees plenty of "this episode is about util" /
+    # "this episode is about LIFO" extremes — without those the policy can't learn
+    # preference-conditional behaviour.
+    dirichlet_alpha: float = 0.5
 
 
 # ---------------------------------------------------------------------------
