@@ -27,12 +27,21 @@ from .pct_env import PCTEnv, PCTEnvConfig
 from .pct_agent import PCTPackingAgent
 from .ppo_trainer import PCTPPOTrainer, PPOConfig
 
+# MORL extension (preference-conditioned)
+from .morl_model import MORL_DRL_GAT, PCTMORLConfig, N_OBJECTIVES
+from .morl_rewards import RewardComponents, compute_reward_vector, scalarise
+from .morl_trainer import MORLPCTPPOTrainer, MORLPPOConfig
+from .morl_agent import MORLPCTAgent
+
 __all__ = [
-    "DRL_GAT",
-    "PCTConfig",
-    "PCTEnv",
-    "PCTEnvConfig",
+    # base PCT
+    "DRL_GAT", "PCTConfig",
+    "PCTEnv", "PCTEnvConfig",
     "PCTPackingAgent",
-    "PCTPPOTrainer",
-    "PPOConfig",
+    "PCTPPOTrainer", "PPOConfig",
+    # MORL
+    "MORL_DRL_GAT", "PCTMORLConfig", "N_OBJECTIVES",
+    "RewardComponents", "compute_reward_vector", "scalarise",
+    "MORLPCTPPOTrainer", "MORLPPOConfig",
+    "MORLPCTAgent",
 ]

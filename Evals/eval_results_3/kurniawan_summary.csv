@@ -1,0 +1,7 @@
+Algorithm,Util (mean),Util (std),Placed %,Access Eff,Stab. Score,Time (ms)
+Bottom-Left,27.98,4.47,86.60,0.302,0.881,5955
+Extreme Points,29.57,4.57,86.80,0.409,0.813,6958
+Best Area Fit,25.65,5.43,85.75,0.316,0.819,3621
+Best Shortest Side,26.79,5.64,86.25,0.364,0.777,3582
+Best Longest Side,23.18,3.45,85.05,0.301,0.852,6226
+PCT (ours),24.82,3.71,85.95,0.395,0.857,6511
