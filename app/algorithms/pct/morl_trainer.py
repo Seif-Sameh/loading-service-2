@@ -404,9 +404,38 @@ class MORLPCTPPOTrainer:
         # the per-objective critic won't exist. Load the shared parameters non-strictly.
         if "morl" not in ckpt:
             strict = False
+
+        # strict=False only tolerates MISSING and UNEXPECTED keys. It does NOT tolerate
+        # shape mismatches on keys present in both models. The single-objective PCT
+        # critic outputs 1 value (critic.weight: [1, 64]); the MORL critic outputs
+        # n_objectives values (critic.weight: [5, 64]). Same key, different shape ->
+        # load_state_dict raises. Filter those out before loading.
+        if not strict:
+            target_sd = self.model.state_dict()
+            shape_mismatched: list[str] = []
+            sd_filtered = {}
+            for k, v in sd.items():
+                if k in target_sd and target_sd[k].shape != v.shape:
+                    shape_mismatched.append(
+                        f"{k} (source {tuple(v.shape)} → target {tuple(target_sd[k].shape)})"
+                    )
+                else:
+                    sd_filtered[k] = v
+            if shape_mismatched:
+                print(
+                    f"warm-start: skipping {len(shape_mismatched)} shape-mismatched key(s):"
+                )
+                for line in shape_mismatched:
+                    print(f"    {line}")
+                print("  these will keep their randomly-initialised MORL values")
+            sd = sd_filtered
+
         missing, unexpected = self.model.load_state_dict(sd, strict=strict)
         if missing or unexpected:
-            print(f"warm-start: missing={len(missing)} keys, unexpected={len(unexpected)} keys (expected when loading single-objective PCT)")
+            print(
+                f"warm-start: missing={len(missing)} keys, unexpected={len(unexpected)} keys "
+                f"(expected when loading single-objective PCT)"
+            )
         if "optimizer_state" in ckpt and ckpt.get("morl"):
             try:
                 self.optimizer.load_state_dict(ckpt["optimizer_state"])
