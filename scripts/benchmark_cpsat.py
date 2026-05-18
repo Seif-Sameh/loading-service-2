@@ -105,6 +105,8 @@ def run(args):
         for code, kwargs in algo_codes:
             algo = get_algorithm(code, **kwargs)
             t0 = time.perf_counter()
+            if hasattr(algo, "prepare"):
+                algo.prepare(c, items)
             res, _ = solve(algorithm=algo, container=c, items=items)
             elapsed = time.perf_counter() - t0
             k = res.kpis
