@@ -21,6 +21,10 @@ class Settings(BaseSettings):
     api_port: int = 8009
 
     rl_weights_path: Path = REPO_ROOT / "models" / "gopt_v1.pt"
+    # Default PCT (single-objective) checkpoint used when the frontend calls
+    # algorithm="pct" (or the backward-compat "ppo" alias) without an explicit
+    # weights_path. Override via env: PCT_WEIGHTS_PATH=/path/to/your.pt
+    pct_weights_path: Path = REPO_ROOT / "models" / "pct_latest.pt"
     heightmap_resolution_mm: int = 10
     max_ems_per_step: int = 80
 
